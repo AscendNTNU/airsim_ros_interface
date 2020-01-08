@@ -6,6 +6,10 @@ There exists a ros plugin given from Microsoft, but it is quite complicated for 
 
 *Note that threading is not used per now, this should be considered in the future.*
 
+## Installation
+
+You have to specify where the AirSim directory is located in the CMakeLists.txt.
+
 ## How to launch 
 
 Simply do: 
