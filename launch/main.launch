@@ -1,0 +1,21 @@
+<launch>
+    <arg name="framerate" default="100.0"/>
+    <arg name="imu_publishing_frequency" default="100.0"/>
+    <arg name="scan_publishing_frequency" default="10.0"/>
+    <arg name="image_publishing_frequency" default="60.0"/>
+    <arg name="frame_id" default="base_link"/>
+    <arg name="image_width" default="480"/>
+    <arg name="image_height" default="320"/>
+    <arg name="camera_name" default="MyCamera1"/>
+
+    <node name="airsim_ros_interface" pkg="airsim_ros_interface" type="airsim_ros_interface.py" output="screen">
+        <param name="framerate" value="$(arg framerate)"/> 
+        <param name="imu_publishing_frequency" value="$(arg imu_publishing_frequency)"/> 
+        <param name="scan_publishing_frequency" value="$(arg scan_publishing_frequency)"/> 
+        <param name="image_publishing_frequency" value="$(arg image_publishing_frequency)"/> 
+        <param name="frame_id" value="$(arg frame_id)"/>
+        <param name="image_width" value="$(arg image_width)"/>
+        <param name="image_height" value="$(arg image_height)"/>
+        <param name="camera_name" value="$(arg camera_name)"/>
+    </node> 
+</launch>
