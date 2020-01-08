@@ -142,15 +142,6 @@ def main():
     # Safely wrap up the connection to AirSim in order to prevent freezes in UE
     imu_client.reset()
 
-    imu_client.armDisarm(False)
-    imu_client.enableApiControl(False)
-
-    image_client.armDisarm(False)
-    image_client.enableApiControl(False)
-
-    lidar_client.armDisarm(False)
-    lidar_client.enableApiControl(False)
-
 if __name__ == '__main__':
     try:
         main()
