@@ -43,10 +43,6 @@ void setup(const ros::NodeHandle& node_handle) {
     image_client.confirmConnection();
     lidar_client.confirmConnection();
 
-    // Important somehow, AirSim doesn't like when you start asking for images instantly after setting up the
-    // connection.
-    // ros::Duration(4.0).sleep();
-
     image_client.enableApiControl(true);
     image_client.armDisarm(true);
 
