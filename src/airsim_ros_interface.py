@@ -26,7 +26,7 @@ def generateLaserScan(data):
     scan.angle_min = -math.pi
     scan.angle_increment = math.pi / 180.0
     scan.scan_time = 0.1
-    scan.range_max = 12
+    scan.range_max = 50
     scan.time_increment = 0
     scan.header.stamp = rospy.Time.now()
 
