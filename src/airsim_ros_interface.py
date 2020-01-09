@@ -5,6 +5,8 @@ import airsim
 import rospy
 import time
 import math
+import signal
+import sys
 
 from geometry_msgs.msg import PoseStamped
 from sensor_msgs.msg import Image
@@ -51,8 +53,16 @@ def generateLaserScan(data):
 
     return scan
 
+def signal_handler(sig, frame):
+    # Wait until AirSim closes the connnection
+    rospy.loginfo("Quitting, stopping connection to AirSim, please wait...")
+    imu_client.reset()
+    rospy.signal_shutdown("Successfully shut down the airsim node")
+
 def main():
-    rospy.init_node('airsim_ros_interface')
+    global imu_client
+    rospy.init_node('airsim_ros_interface', disable_signals=True)
+    signal.signal(signal.SIGINT, signal_handler)
 
     imu_publisher = rospy.Publisher("/airsim/imu/data", Imu, queue_size=1)
     image_publisher = rospy.Publisher("/airsim/camera/image", Image, queue_size=1)
@@ -62,13 +72,21 @@ def main():
 
     # We have to set up multiple clients as the AirSim API seems to prefer this, through tests this causes UE to 
     # freeze far less
-    imu_client = airsim.MultirotorClient();
+    imu_client = airsim.MultirotorClient()
     image_client = airsim.MultirotorClient()
     lidar_client = airsim.MultirotorClient()
 
-    imu_client.confirmConnection()
-    image_client.confirmConnection()
-    lidar_client.confirmConnection()
+    connected = False
+
+    while not connected:  
+        try:
+            imu_client.confirmConnection()
+            image_client.confirmConnection()
+            lidar_client.confirmConnection()
+            connected = True
+        except:
+            rospy.logerr("Could not connect to AirSim, is the simulation running?")
+            time.sleep(1.0)
 
     rospy.loginfo("Starting publishing!")
 
