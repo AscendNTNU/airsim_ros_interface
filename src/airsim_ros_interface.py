@@ -7,6 +7,7 @@ import time
 import math
 import signal
 import sys
+import msgpackrpc 
 
 from geometry_msgs.msg import PoseStamped
 from sensor_msgs.msg import Image
@@ -14,6 +15,8 @@ from sensor_msgs.msg import LaserScan
 from sensor_msgs.msg import Imu
 
 current_pose = PoseStamped()
+client = msgpackrpc.Client(msgpackrpc.Address("127.0.0.1", 41451), timeout = 3600, pack_encoding = 'utf-8', unpack_encoding = 'utf-8')
+
 
 def poseCallback(msg):
     global current_pose
@@ -53,6 +56,9 @@ def generateLaserScan(data):
 
     return scan
 
+def sendBackPropellerThrustSignal(value):
+    client.call('setBackPropellerControlSignal', value, "PX4")
+
 def signal_handler(sig, frame):
     # Wait until AirSim closes the connnection
     rospy.loginfo("Quitting, stopping connection to AirSim, please wait...")
@@ -77,7 +83,6 @@ def main():
     lidar_client = airsim.MultirotorClient()
 
     connected = False
-
     while not connected:  
         try:
             imu_client.confirmConnection()
@@ -156,7 +161,7 @@ def main():
         rate.sleep()
 
     rospy.loginfo("Quitting, stopping connection to AirSim, please wait...")
-
+    
     # Safely wrap up the connection to AirSim in order to prevent freezes in UE
     imu_client.reset()
 
