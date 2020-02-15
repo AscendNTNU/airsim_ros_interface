@@ -1,30 +1,33 @@
 <launch>
-    <arg name="rate" default="100.0"/>
+    <arg name="rate" default="100"/>
     <arg name="scan_publishing_frequency" default="10.0"/>
     <arg name="image_publishing_frequency" default="20.0"/>
     <arg name="point_cloud_publishing_frequency" default="10.0"/>
-    <arg name="frame_id" default="base_link"/>
-    <arg name="image_width" default="256"/>
-    <arg name="image_height" default="140"/>
-    <arg name="camera_name" default="MyCamera1"/>
+    <arg name="frame" default="base_link"/>
+    <arg name="image_width" default="480"/>
+    <arg name="image_height" default="320"/>
+    <arg name="camera_name" default="center_camera"/>
+    <arg name="lidar_2d_name" default="Lidar2D"/>
+    <arg name="lidar_3d_name" default="Lidar3D"/>
+    <arg name="vehicle_name" default="PX4"/>
 
     <arg name="module_position_extracter_rate" default="10"/>
     <arg name="module_position_extractor_data_file_path" default="/mnt/c/tmp/RosIntegrationUnreal/RosIntegrationData.txt"/>
-
-    <node name="airsim_ros_interface" pkg="airsim_ros_interface" type="airsim_ros_interface.py" output="screen">
+    
+    <node name="airsim_ros_interface" pkg="airsim_ros_interface" type="airsim_ros_interface_node" output="screen">
         <param name="rate" value="$(arg rate)"/> 
         <param name="scan_publishing_frequency" value="$(arg scan_publishing_frequency)"/> 
         <param name="image_publishing_frequency" value="$(arg image_publishing_frequency)"/> 
         <param name="point_cloud_publishing_frequency" value="$(arg point_cloud_publishing_frequency)"/> 
-        <param name="frame_id" value="$(arg frame_id)"/>
-        <param name="image_width" value="$(arg image_width)"/>
-        <param name="image_height" value="$(arg image_height)"/>
+        <param name="frame" value="$(arg frame)"/>
+        <param name="vehicle_name" value="$(arg vehicle_name)"/>
         <param name="camera_name" value="$(arg camera_name)"/>
-    </node> 
+        <param name="lidar_2d_name" value="$(arg lidar_2d_name)"/>
+        <param name="lidar_3d_name" value="$(arg lidar_3d_name)"/>
+    </node>
 
     <node name="module_position_extracter" pkg="airsim_ros_interface" type="module_position_extracter.py" output="screen">
         <param name="rate" value="$(arg module_position_extracter_rate)"/> 
         <param name="data_file_path" value="$(arg module_position_extractor_data_file_path)"/> 
-
     </node> 
 </launch>
