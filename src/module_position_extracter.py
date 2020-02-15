@@ -35,8 +35,8 @@ def main():
     rospy.init_node("module_position_publisher")
     module_position_publisher = rospy.Publisher("/airsim/module_position", PoseWithCovarianceStamped, queue_size=1)
 
-    path = rospy.get_param("~data_file_path", "/mnt/c/tmp/RosIntegrationUnreal/RosIntegrationData.txt")
-    rate = rospy.Rate(rospy.get_param("~rate", 10));
+    path = rospy.get_param("~data_file_path")
+    rate = rospy.Rate(rospy.get_param("~rate"));
 
     while not rospy.is_shutdown():
 
