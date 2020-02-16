@@ -13,7 +13,7 @@
 
     <arg name="module_position_extracter_rate" default="10"/>
     <arg name="module_position_extractor_data_file_path" default="/mnt/c/tmp/RosIntegrationUnreal/RosIntegrationData.txt"/>
-    
+
     <node name="airsim_ros_interface" pkg="airsim_ros_interface" type="airsim_ros_interface_node" output="screen">
         <param name="rate" value="$(arg rate)"/> 
         <param name="scan_publishing_frequency" value="$(arg scan_publishing_frequency)"/> 
