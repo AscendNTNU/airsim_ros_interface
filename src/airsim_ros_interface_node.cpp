@@ -19,6 +19,7 @@ STRICT_MODE_ON
 #include <sensor_msgs/LaserScan.h>
 #include <sensor_msgs/PointCloud2.h>
 
+#include <csignal>
 #include <memory>
 
 typedef ImageCaptureBase::ImageRequest ImageRequest;
@@ -83,7 +84,7 @@ void publishLaserScan(const ros::Publisher& publisher, AirSimClient& lidar_clien
         std::ceil((laser_scan.angle_max - laser_scan.angle_min) / laser_scan.angle_increment);
     laser_scan.ranges.assign(ranges_size, laser_scan.range_max);
 
-    for (int i = 0; i < lidar_data.point_cloud.size(); i += 3) {
+    for (unsigned int i = 0; i < lidar_data.point_cloud.size(); i += 3) {
         // The scan is in NED (local frame), so we have to convert to ENU and make it to local frame so
         // that the check for range is valid
         const double dx = lidar_data.point_cloud[i + 1] - pose.pose.position.x;
@@ -105,10 +106,6 @@ void publishLaserScan(const ros::Publisher& publisher, AirSimClient& lidar_clien
 
     publisher.publish(laser_scan);
 }
-
-typedef struct Point {
-    float x, y, z;
-} Point;
 
 void publishPointCloud(const ros::Publisher& publisher, AirSimClient& point_cloud_client, const std ::string& frame,
                        const std::string& lidar_name, const std::string& vehicle_name) {
@@ -143,7 +140,22 @@ void publishPointCloud(const ros::Publisher& publisher, AirSimClient& point_clou
 
     point_cloud.data.resize(point_cloud.row_step);
 
-    std::memcpy(&point_cloud.data[0], &point_cloud_data.point_cloud[0], point_cloud.row_step);
+    for (unsigned int i = 0; i < point_cloud_data.point_cloud.size(); i += 3) {
+        // Convert from NED to ENU
+        const float x = point_cloud_data.point_cloud[i + 1] - pose.pose.position.x;
+        const float y = point_cloud_data.point_cloud[i] - pose.pose.position.y;
+        const float z = -(point_cloud_data.point_cloud[i + 2] + 0.1) - pose.pose.position.z;
+
+        char components[3 * sizeof(float)];
+
+        std::memcpy(&components[0], &x, sizeof(float));
+        std::memcpy(&components[4], &y, sizeof(float));
+        std::memcpy(&components[8], &z, sizeof(float));
+
+        std::memcpy(&point_cloud.data[i * sizeof(float)], &components[0], 3 * sizeof(float));
+    }
+
+    // std::memcpy(&point_cloud.data[0], &point_cloud_data.point_cloud[0], point_cloud.row_step);
 
     point_cloud.is_bigendian = false;
     point_cloud.is_dense = false;
@@ -151,9 +163,18 @@ void publishPointCloud(const ros::Publisher& publisher, AirSimClient& point_clou
     publisher.publish(point_cloud);
 }
 
+AirSimClient image_client, lidar_client, point_cloud_client;
+
+void signalHandler(int signum) {
+    image_client.reset();
+    exit(signum);
+}
+
 int main(int argc, char** argv) {
     ros::init(argc, argv, "airsim_ros_interface_node");
     ros::NodeHandle node_handle;
+
+    signal(SIGINT, signalHandler);
 
     ros::Subscriber pose_subscriber =
         node_handle.subscribe<geometry_msgs::PoseStamped>("/mavros/local_position/pose", 1, &poseCallback);
@@ -161,8 +182,6 @@ int main(int argc, char** argv) {
     ros::Publisher scan_publisher = node_handle.advertise<sensor_msgs::LaserScan>("/scan", 1);
     ros::Publisher point_cloud_publisher = node_handle.advertise<sensor_msgs::PointCloud2>("/airsim/point_cloud", 1);
     ros::Publisher image_publisher = node_handle.advertise<sensor_msgs::Image>("airsim/camera/image", 1);
-
-    AirSimClient image_client, lidar_client, point_cloud_client;
 
     try {
         image_client.confirmConnection();
@@ -172,14 +191,14 @@ int main(int argc, char** argv) {
         std::string frame, vehicle_name, camera_name, lidar_2d_name, lidar_3d_name;
         int refresh_rate;
 
-        node_handle.getParam("rate", refresh_rate);
-        node_handle.getParam("frame", frame);
-        node_handle.getParam("vehicle_name", vehicle_name);
-        node_handle.getParam("camera_name", camera_name);
-        node_handle.getParam("lidar_2d_name", lidar_2d_name);
-        node_handle.getParam("lidar_3d_name", lidar_3d_name);
+        const std::string prefix = ros::this_node::getName();
 
-        std::string frame_ned = frame + "_ned";
+        node_handle.getParam(prefix + "/rate", refresh_rate);
+        node_handle.getParam(prefix + "/frame", frame);
+        node_handle.getParam(prefix + "/vehicle_name", vehicle_name);
+        node_handle.getParam(prefix + "/camera_name", camera_name);
+        node_handle.getParam(prefix + "/lidar_2d_name", lidar_2d_name);
+        node_handle.getParam(prefix + "/lidar_3d_name", lidar_3d_name);
 
         ROS_INFO_STREAM("Setup completed, starting publishing");
 
@@ -191,11 +210,11 @@ int main(int argc, char** argv) {
         while (ros::ok()) {
             if ((ros::Time::now() - last_time).toSec() >= 0.1) {
                 publishLaserScan(scan_publisher, lidar_client, frame, lidar_2d_name, vehicle_name);
-                publishPointCloud(point_cloud_publisher, point_cloud_client, frame_ned, lidar_3d_name, vehicle_name);
+                publishPointCloud(point_cloud_publisher, point_cloud_client, frame, lidar_3d_name, vehicle_name);
                 last_time = ros::Time::now();
             }
 
-            publishImage(image_publisher, image_client, frame, camera_name);
+            // publishImage(image_publisher, image_client, frame, camera_name);
 
             ros::spinOnce();
             rate.sleep();
