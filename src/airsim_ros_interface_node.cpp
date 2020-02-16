@@ -144,7 +144,7 @@ void publishPointCloud(const ros::Publisher& publisher, AirSimClient& point_clou
         // Convert from NED to ENU
         const float x = point_cloud_data.point_cloud[i + 1] - pose.pose.position.x;
         const float y = point_cloud_data.point_cloud[i] - pose.pose.position.y;
-        const float z = -(point_cloud_data.point_cloud[i + 2] + 0.1) - pose.pose.position.z;
+        const float z = -(point_cloud_data.point_cloud[i + 2] - 0.8) - pose.pose.position.z;
 
         char components[3 * sizeof(float)];
 
@@ -154,8 +154,6 @@ void publishPointCloud(const ros::Publisher& publisher, AirSimClient& point_clou
 
         std::memcpy(&point_cloud.data[i * sizeof(float)], &components[0], 3 * sizeof(float));
     }
-
-    // std::memcpy(&point_cloud.data[0], &point_cloud_data.point_cloud[0], point_cloud.row_step);
 
     point_cloud.is_bigendian = false;
     point_cloud.is_dense = false;
@@ -190,10 +188,12 @@ int main(int argc, char** argv) {
 
         std::string frame, vehicle_name, camera_name, lidar_2d_name, lidar_3d_name;
         int refresh_rate;
+        int scan_and_point_cloud_publishing_rate;
 
         const std::string prefix = ros::this_node::getName();
 
         node_handle.getParam(prefix + "/rate", refresh_rate);
+        node_handle.getParam(prefix + "/scan_and_point_cloud_publishing_rate", scan_and_point_cloud_publishing_rate);
         node_handle.getParam(prefix + "/frame", frame);
         node_handle.getParam(prefix + "/vehicle_name", vehicle_name);
         node_handle.getParam(prefix + "/camera_name", camera_name);
@@ -208,13 +208,14 @@ int main(int argc, char** argv) {
         ros::Time last_time = ros::Time::now();
 
         while (ros::ok()) {
-            if ((ros::Time::now() - last_time).toSec() >= 0.1) {
+            if ((ros::Time::now() - last_time).toSec() >=
+                1.0 / static_cast<float>(scan_and_point_cloud_publishing_rate)) {
                 publishLaserScan(scan_publisher, lidar_client, frame, lidar_2d_name, vehicle_name);
                 publishPointCloud(point_cloud_publisher, point_cloud_client, frame, lidar_3d_name, vehicle_name);
                 last_time = ros::Time::now();
             }
 
-            // publishImage(image_publisher, image_client, frame, camera_name);
+            publishImage(image_publisher, image_client, frame, camera_name);
 
             ros::spinOnce();
             rate.sleep();

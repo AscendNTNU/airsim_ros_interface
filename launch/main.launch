@@ -1,7 +1,6 @@
 <launch>
     <arg name="rate" default="100"/>
-    <arg name="scan_publishing_frequency" default="10.0"/>
-    <arg name="image_publishing_frequency" default="20.0"/>
+    <arg name="scan_and_point_cloud_publishing_rate" default="10"/> 
     <arg name="point_cloud_publishing_frequency" default="10.0"/>
     <arg name="frame" default="base_link"/>
     <arg name="image_width" default="480"/>
@@ -16,8 +15,7 @@
 
     <node name="airsim_ros_interface" pkg="airsim_ros_interface" type="airsim_ros_interface_node" output="screen">
         <param name="rate" value="$(arg rate)"/> 
-        <param name="scan_publishing_frequency" value="$(arg scan_publishing_frequency)"/> 
-        <param name="image_publishing_frequency" value="$(arg image_publishing_frequency)"/> 
+        <param name="scan_and_point_cloud_publishing_rate" value="$(arg scan_and_point_cloud_publishing_rate)"/> 
         <param name="point_cloud_publishing_frequency" value="$(arg point_cloud_publishing_frequency)"/> 
         <param name="frame" value="$(arg frame)"/>
         <param name="vehicle_name" value="$(arg vehicle_name)"/>
