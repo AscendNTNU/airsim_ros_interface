@@ -8,7 +8,8 @@ There exists a ros plugin given from Microsoft, but it is quite complicated for 
 
 ## Installation
 
-You have to specify where the AirSim directory is located in the CMakeLists.txt.
+1. Clone, setup and build AirSim according to ![this](https://github.com/microsoft/AirSim/blob/master/docs/build_linux.md)
+2. You have to specify where the AirSim directory is located in the CMakeLists.txt.
 
 ## How to launch 
 
