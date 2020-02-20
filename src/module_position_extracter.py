@@ -53,7 +53,7 @@ def main():
             os.remove(path)
 
         except OSError as error:
-            print("Could not open file for reading: " + error + ". Is the simulation running?")
+            continue             
 
         rate.sleep()
 
