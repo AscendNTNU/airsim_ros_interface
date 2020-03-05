@@ -107,56 +107,54 @@ void publishLaserScan(const ros::Publisher& publisher, AirSimClient& lidar_clien
     publisher.publish(laser_scan);
 }
 
-void publishPointCloud(const ros::Publisher& publisher, AirSimClient& point_cloud_client, const std ::string& frame,
-                       const std::string& lidar_name, const std::string& vehicle_name) {
-    const msr::airlib::LidarData& point_cloud_data = point_cloud_client.getLidarData(lidar_name, vehicle_name);
-
+void publishPointCloud(const ros::Publisher& publisher, AirSimClient& point_cloud_client, const std ::string& frame, const std::string& lidar_name, const std::string& vehicle_name) {
+ 
+    auto const point_cloud_data = point_cloud_client.getLidarData(lidar_name, vehicle_name);
     sensor_msgs::PointCloud2 point_cloud;
     point_cloud.header.frame_id = frame;
-    point_cloud.header.stamp = ros::Time::now();
-    point_cloud.header.frame_id = frame;
 
-    point_cloud.height = 1;
-    point_cloud.width = point_cloud_data.point_cloud.size() / 3;
+    if (point_cloud_data.point_cloud.size() > 3)
+    {
+        point_cloud.height = 1;
+        point_cloud.width = point_cloud_data.point_cloud.size() / 3;
 
-    point_cloud.fields.resize(3);
+        point_cloud.fields.resize(3);
+        point_cloud.fields[0].name = "x"; 
+        point_cloud.fields[1].name = "y"; 
+        point_cloud.fields[2].name = "z";
+        int offset = 0;
 
-    // Convert x/y/z to fields
-    point_cloud.fields[0].name = "x";
-    point_cloud.fields[1].name = "y";
-    point_cloud.fields[2].name = "z";
+        for (size_t d = 0; d < point_cloud.fields.size(); ++d, offset += 4)
+        {
+            point_cloud.fields[d].offset = offset;
+            point_cloud.fields[d].datatype = sensor_msgs::PointField::FLOAT32;
+            point_cloud.fields[d].count  = 1;
+        }
 
-    int offset = 0;
+        point_cloud.is_bigendian = false;
+        point_cloud.point_step = offset;
+        point_cloud.row_step = point_cloud.point_step * point_cloud.width;
 
-    // All offsets are *4, as all field data types are float32
-    for (size_t d = 0; d < point_cloud.fields.size(); ++d, offset += 4) {
-        point_cloud.fields[d].offset = offset;
-        point_cloud.fields[d].datatype = sensor_msgs::PointField::FLOAT32;
-        point_cloud.fields[d].count = 1;
+        point_cloud.is_dense = true;
+        std::vector<float> data_std = point_cloud_data.point_cloud;
+
+		
+	    for (unsigned int i = 0; i < data_std.size(); i += 3) {
+		// Convert from NED to ENU
+		const float x = data_std[i + 1] - pose.pose.position.x;
+		const float y = data_std[i] - pose.pose.position.y;
+		const float z = -(data_std[i + 2] - 0.8) - pose.pose.position.z;
+
+		data_std[i + 0] = x;
+		data_std[i + 1] = y;
+		data_std[i + 2] = z;
+	    }
+
+
+        const unsigned char* bytes = reinterpret_cast<const unsigned char*>(&data_std[0]);
+        vector<unsigned char> lidar_msg_data(bytes, bytes + sizeof(float) * data_std.size());
+        point_cloud.data = std::move(lidar_msg_data);
     }
-
-    point_cloud.point_step = offset;
-    point_cloud.row_step = point_cloud.point_step * point_cloud.width;
-
-    point_cloud.data.resize(point_cloud.row_step);
-
-    for (unsigned int i = 0; i < point_cloud_data.point_cloud.size(); i += 3) {
-        // Convert from NED to ENU
-        const float x = point_cloud_data.point_cloud[i + 1] - pose.pose.position.x;
-        const float y = point_cloud_data.point_cloud[i] - pose.pose.position.y;
-        const float z = -(point_cloud_data.point_cloud[i + 2] - 0.8) - pose.pose.position.z;
-
-        char components[3 * sizeof(float)];
-
-        std::memcpy(&components[0], &x, sizeof(float));
-        std::memcpy(&components[4], &y, sizeof(float));
-        std::memcpy(&components[8], &z, sizeof(float));
-
-        std::memcpy(&point_cloud.data[i * sizeof(float)], &components[0], 3 * sizeof(float));
-    }
-
-    point_cloud.is_bigendian = false;
-    point_cloud.is_dense = false;
 
     publisher.publish(point_cloud);
 }
