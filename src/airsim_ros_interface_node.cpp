@@ -53,6 +53,7 @@ void publishImage(const ros::Publisher& image_publisher, const ros::Publisher& d
         image.height = image_response.height;
         image.width = image_response.width;
 
+        // TODO: this is really bad
         std::vector<unsigned char> bytes;
         for (int i = 0; i < depth_image_response.image_data_float.size(); i++) {
             bytes.push_back(static_cast<unsigned char>(depth_image_response.image_data_float[i] * 255));
