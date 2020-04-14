@@ -3,8 +3,8 @@
     <arg name="scan_and_point_cloud_publishing_rate" default="10"/> 
     <arg name="point_cloud_publishing_frequency" default="10.0"/>
     <arg name="frame" default="base_link"/>
-    <arg name="image_width" default="480"/>
-    <arg name="image_height" default="320"/>
+    <arg name="image_width" default="320"/>
+    <arg name="image_height" default="240"/>
     <arg name="camera_name" default="center_camera"/>
     <arg name="lidar_2d_name" default="Lidar2D"/>
     <arg name="lidar_3d_name" default="Lidar3D"/>
